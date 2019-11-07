@@ -4,7 +4,7 @@
   "description": "City quest engine",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db": "mongod --config mongodb.yaml"
   },
   "author": "Eugene Malin (Novikov)",
   "license": "MIT"
