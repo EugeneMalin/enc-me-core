@@ -4,11 +4,14 @@
   "description": "City quest engine",
   "main": "server.js",
   "scripts": {
-    "db": "mongod --config mongodb.yaml"
+    "mongo": "mongod --config mongodb.yaml",
+    "debug": "node server.js",
+    "start": "export NODE_ENV=production && node server.js"
   },
   "author": "Eugene Malin (Novikov)",
   "license": "MIT",
   "dependencies": {
+    "express": "^4.17.1",
     "nconf": "^0.10.0",
     "winston": "^3.2.1"
   }
