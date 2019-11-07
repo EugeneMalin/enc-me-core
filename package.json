@@ -7,5 +7,9 @@
     "db": "mongod --config mongodb.yaml"
   },
   "author": "Eugene Malin (Novikov)",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "nconf": "^0.10.0",
+    "winston": "^3.2.1"
+  }
 }
