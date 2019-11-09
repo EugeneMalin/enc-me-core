@@ -2,17 +2,28 @@
   "name": "enc-me-engine",
   "version": "0.0.1",
   "description": "City quest engine",
-  "main": "server.js",
+  "main": "app.ts",
   "scripts": {
-    "mongo": "mongod --config mongodb.yaml",
-    "debug": "node server.js",
-    "start": "export NODE_ENV=production && node server.js"
+    "tsc": "tsc",
+    "debug": "tsc && node ./build/app.js",
+    "start": "tsc && export NODE_ENV=production && node ./build/app.js"
   },
   "author": "Eugene Malin (Novikov)",
   "license": "MIT",
   "dependencies": {
+    "@types/bluebird": "^3.5.28",
+    "@types/express": "^4.17.2",
+    "@types/nconf": "^0.10.0",
+    "@types/node": "^12.12.7",
+    "@types/validator": "^10.11.3",
+    "@types/winston": "^2.4.4",
     "express": "^4.17.1",
     "nconf": "^0.10.0",
+    "pg": "^7.12.1",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^5.21.2",
+    "sequelize-typescript": "^1.0.0",
+    "typescript": "^3.7.2",
     "winston": "^3.2.1"
   }
 }

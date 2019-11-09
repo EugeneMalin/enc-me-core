@@ -2,10 +2,10 @@
  * Config accessor class
  */
 
-var nconf = require('nconf')
+import config from 'nconf';
 
-nconf.argv()
+config.argv()
     .env()
     .file({file: './config.json'});
 
-module.exports = nconf;
+export default config;

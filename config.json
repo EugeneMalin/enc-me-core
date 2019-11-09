@@ -5,5 +5,13 @@
     },
 	"mongoose": {
 		"uri": "mongodb://localhost/test1"
+	},
+	"postgres": {
+		"host": "localhost",
+		"credits": {
+			"username": "encounter",
+			"password": "encounter",
+			"dbname": "encounter"
+		}
 	}
 }
