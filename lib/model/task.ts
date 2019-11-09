@@ -1,12 +1,12 @@
 import { Model, DataTypes } from 'sequelize';  
 import sequelize from '../sequelize';
-import Answer from './answer';
 
 class Task extends Model {
     public id!: number;
     public name!: string;
     public description!: string;
     public timeLimit!: number;
+    public matchId!: number;
 }
 
 Task.init({
@@ -26,6 +26,9 @@ Task.init({
     timeLimit: {
         type: DataTypes.INTEGER,
         defaultValue: 20
+    },
+    matchId: {
+        type: DataTypes.INTEGER
     }
 }, {
     sequelize, modelName: 'task'
