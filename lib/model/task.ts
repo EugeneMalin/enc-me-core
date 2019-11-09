@@ -1,5 +1,6 @@
 import { Model, DataTypes } from 'sequelize';  
 import sequelize from '../sequelize';
+import Answer from './answer';
 
 class Task extends Model {
     public id!: number;
@@ -10,7 +11,7 @@ class Task extends Model {
 
 Task.init({
     id: {
-        type: DataTypes.INTEGER.UNSIGNED,
+        type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
     },
