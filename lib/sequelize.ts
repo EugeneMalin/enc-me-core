@@ -6,7 +6,8 @@ const sequelize =  new Sequelize({
     dialect: 'postgres',
     username: config.get('postgres:credits:username'),
     password: config.get('postgres:credits:password'),
-    storage: ':memory:'
+    storage: ':memory:',
+    logging: process.env.NODE_ENV !== 'production'
 })
 
 export default sequelize;

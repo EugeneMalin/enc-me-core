@@ -12,6 +12,7 @@ enum MatchState {
 class Match extends Model {
     public id!: number;
     public authorId!: number;
+    public name!: string;
     public description!: string;
     public startAt!: Date;
     public endAt!: Date;
@@ -29,6 +30,9 @@ Match.init({
     authorId: {
         type: DataTypes.INTEGER
     },
+    name: {
+        type: DataTypes.STRING
+    },
     description: {
         type: DataTypes.TEXT
     },
@@ -45,10 +49,11 @@ Match.init({
         type: DataTypes.INTEGER
     },
     state: {
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER,
+        defaultValue: MatchState.Created
     },
 }, {
-    sequelize, modelName: 'match'
+    sequelize, modelName: 'match',
 });
 
 export default Match
