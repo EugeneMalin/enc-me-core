@@ -1,11 +1,18 @@
-import express = require('express');
+import express from 'express';
 import config from './lib/config';
 import logger from './lib/log';
+import './lib/relations';
+import bodyParser from 'body-parser';
+import { useExpressServer } from "routing-controllers";
+import MatchController from './lib/controller/match'
 import sequelize from './lib/sequelize';
-import Task from './lib/model/task'
+const server: express.Application = express();
 
-const app: express.Application = express();
+sequelize.sync();
+server.use(bodyParser.json());
+server.use(bodyParser.urlencoded({extended: true}));
+server.use('/api/match', MatchController);
 
-app.listen(config.get('port'), function() {
+server.listen(config.get('port'), function() {
     logger.info('Express server listening on port ' + config.get('port'));
 });
