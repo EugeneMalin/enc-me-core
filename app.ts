@@ -8,6 +8,7 @@ import sequelize from './lib/sequelize';
 const server: express.Application = express();
 
 sequelize.sync();
+
 server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({extended: true}));
 server.use('/api/match', MatchController);
