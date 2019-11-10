@@ -3,8 +3,7 @@ import config from './lib/config';
 import logger from './lib/log';
 import './lib/relations';
 import bodyParser from 'body-parser';
-import { useExpressServer } from "routing-controllers";
-import MatchController from './lib/controller/match'
+import MatchController from './lib/router/match'
 import sequelize from './lib/sequelize';
 const server: express.Application = express();
 
