@@ -5,6 +5,7 @@ import Hint from "./model/hint";
 import Team from "./model/team";
 import Gamer from "./model/gamer";
 import TeamGamer from "./model/teamgamer";
+import MatchParticipant from "./model/matchparticipant";
 
 // One task can have many answers
 Task.hasMany(Answer)
@@ -41,6 +42,38 @@ Team.belongsToMany(Gamer, {
 Gamer.belongsToMany(Team, {
     through: {
         model: TeamGamer,
+        unique: true
+    },
+    foreignKey: 'gamerId'
+})
+// Match has team participants
+Match.belongsToMany(Team, {
+    through: {
+        model: MatchParticipant,
+        unique: false,
+    },
+    foreignKey: 'matchId'
+})
+// Match has single gamer participants
+Match.belongsToMany(Gamer, {
+    through: {
+        model: MatchParticipant,
+        unique: false
+    },
+    foreignKey: 'matchId'
+})
+// Team can take part in many matches
+Team.belongsToMany(Match, {
+    through: {
+        model: MatchParticipant,
+        unique: true,
+    },
+    foreignKey: 'teamId'
+})
+// Gamer can take part in many matches
+Gamer.belongsToMany(Match, {
+    through: {
+        model: MatchParticipant,
         unique: true
     },
     foreignKey: 'gamerId'
