@@ -1,7 +1,19 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../sequelize";
 import crypto from 'crypto';
-class User extends Model {
+
+export interface IUserDraft {
+    username: string
+    hashedPassword: string
+    salt: string,
+}
+
+export interface IUser extends IUserDraft {
+    id?: number
+    password?: string
+}
+
+class User extends Model implements IUser {
     public id!: number;
     public username!: string;
     public hashedPassword!: string;
@@ -26,7 +38,7 @@ class User extends Model {
         return this._plainPassword;
     }
 
-    static getDraft(username: string, password: string): object {
+    static getDraft(username: string, password: string): IUserDraft {
         const u = new User();
         
         u.username = username;

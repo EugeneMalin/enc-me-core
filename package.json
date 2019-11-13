@@ -5,7 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "tsc": "tsc",
-    "autogen": "tsc && node ./build/dataGen.js",
+    "autogen": "tsc && node ./build/demo.js",
     "debug": "tsc && node ./build/app.js",
     "start": "tsc && export NODE_ENV=production && node ./build/app.js"
   },
