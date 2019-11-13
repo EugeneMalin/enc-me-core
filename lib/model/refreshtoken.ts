@@ -1,19 +1,19 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../sequelize";
 
-class AccessToken extends Model {
+class RefreshToken extends Model {
     public userId!: number;
-    public clientId!: number;
+    public clientId!: string;
     public token!: string;
     public createdAt!: Date;
 }
 
-AccessToken.init({
+RefreshToken.init({
     userId: DataTypes.INTEGER,
-    clientId: DataTypes.INTEGER,
+    clientId: DataTypes.STRING,
     token: DataTypes.STRING
 }, {
-    modelName: 'accesstoken', sequelize
+    modelName: 'refreshtoken', sequelize
 })
 
-export default AccessToken
+export default RefreshToken
