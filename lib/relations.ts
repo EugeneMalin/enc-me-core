@@ -6,10 +6,10 @@ import Team from "./model/team";
 import Gamer from "./model/gamer";
 import TeamGamer from "./model/teamgamer";
 import MatchParticipant from "./model/matchparticipant";
-import User from "./auth/user";
-import Client from "./auth/client";
-import AccessToken from "./auth/accesstoken";
-import RefreshToken from "./auth/refreshtoken";
+import User from "./model/user";
+import Client from "./model/client";
+import AccessToken from "./model/accesstoken";
+import RefreshToken from "./model/refreshtoken";
 
 // One task can have many answers
 Task.hasMany(Answer)
@@ -83,7 +83,7 @@ Gamer.belongsToMany(Match, {
     foreignKey: 'gamerId'
 })
 // One user belongs to the one gamer
-User.belongsTo(Gamer, {
+Gamer.belongsTo(User, {
     foreignKey: 'userId'
 })
 // User can have many clients by access token
