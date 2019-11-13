@@ -5,6 +5,8 @@ import express from 'express';
 
 import config from './lib/config';
 import logger from './lib/log';
+import UserController from './lib/router/user'
+import ClientController from './lib/router/client'
 import MatchController from './lib/router/match'
 import sequelize from './lib/sequelize';
 import oauth from './lib/oauth';
@@ -21,9 +23,15 @@ server.use(passport.initialize());
 server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({extended: true}));
 
+server.use('/api/client', ClientController);
+server.use('/api/user', UserController);
 server.use('/api/match', MatchController);
 
-server.post('/oauth/token', oauth);
+server.post('/api/token', oauth);
+
+server.get('/api', (req, res) => {
+    return res.send('Api is running on port: ' + config.get('port'));
+})
 
 server.get('/api/userInfo',
     passport.authenticate('bearer', { session: false }),
