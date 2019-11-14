@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';  
-import sequelize from '../sequelize';
+import {connection} from '../sequelize';
 
 class Hint extends Model {
     public id!: number;
@@ -24,7 +24,7 @@ Hint.init({
         type: DataTypes.INTEGER
     }
 }, {
-    sequelize, modelName: 'hint' 
+    sequelize: connection, modelName: 'hint' 
 })
 
 export default Hint;

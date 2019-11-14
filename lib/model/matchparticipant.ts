@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from '../sequelize'
+import {connection} from '../sequelize'
 
 class MatchParticipant extends Model {
     public id!: number;
@@ -24,7 +24,7 @@ MatchParticipant.init({
     },
     matchId: DataTypes.INTEGER
 }, {
-    modelName: 'matchparticipant', sequelize
+    modelName: 'matchparticipant', sequelize: connection
 })
 
 export default MatchParticipant;

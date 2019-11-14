@@ -8,7 +8,7 @@ import logger from './lib/log';
 import UserController from './lib/router/user'
 import ClientController from './lib/router/client'
 import MatchController from './lib/router/match'
-import sequelize from './lib/sequelize';
+import {connection} from './lib/sequelize';
 import oauth from './lib/oauth';
 
 import './lib/relations';
@@ -16,7 +16,7 @@ import './lib/auth';
 
 const server: express.Application = express();
 
-sequelize.sync();
+connection.sync();
 
 server.use(methodOverride('X-HTTP-Method-Override'));
 server.use(passport.initialize());

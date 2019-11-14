@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';  
-import sequelize from '../sequelize';
+import {connection} from '../sequelize';
 
 class Team extends Model {
     public id!: number;
@@ -24,7 +24,7 @@ Team.init({
         type: DataTypes.INTEGER
     }
 }, {
-    sequelize, modelName: 'team'
+    sequelize: connection, modelName: 'team'
 })
 
 export default Team;

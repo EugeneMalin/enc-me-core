@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from "../sequelize";
+import {connection} from "../sequelize";
 import crypto from 'crypto';
 
 export interface IUserDraft {
@@ -65,7 +65,7 @@ User.init({
     hashedPassword: DataTypes.STRING,
     salt: DataTypes.STRING
 }, {
-    modelName: 'user', sequelize
+    modelName: 'user', sequelize: connection
 })
 
 export default User;

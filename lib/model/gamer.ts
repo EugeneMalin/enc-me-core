@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';  
-import sequelize from '../sequelize';
+import {connection} from '../sequelize';
 
 class Gamer extends Model {
     public id!: number;
@@ -25,7 +25,7 @@ Gamer.init({
         type: DataTypes.TEXT
     }
 }, {
-    modelName: 'gamer', sequelize
+    modelName: 'gamer', sequelize: connection
 })
 
 export default Gamer;

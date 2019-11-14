@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';  
-import sequelize from '../sequelize';
+import {connection} from '../sequelize';
 
 enum MatchState {
     Created,
@@ -53,7 +53,7 @@ Match.init({
         defaultValue: MatchState.Created
     },
 }, {
-    sequelize, modelName: 'match',
+    sequelize: connection, modelName: 'match',
 });
 
 export default Match

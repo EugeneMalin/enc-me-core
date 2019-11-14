@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from "../sequelize";
+import {connection} from "../sequelize";
 
 class AccessToken extends Model {
     public userId!: number;
@@ -13,7 +13,7 @@ AccessToken.init({
     clientId: DataTypes.STRING,
     token: DataTypes.STRING
 }, {
-    modelName: 'accesstoken', sequelize
+    modelName: 'accesstoken', sequelize: connection
 })
 
 export default AccessToken

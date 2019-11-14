@@ -4,13 +4,13 @@ import User from './lib/model/user'
 import Client from './lib/model/client'
 import AccessToken from './lib/model/accesstoken'
 import RefreshToken from './lib/model/refreshtoken'
-import sequelize from './lib/sequelize';
+import {connection} from './lib/sequelize';
 import logger from './lib/log';
 
 import './lib/relations';
 import './lib/auth';
 
-sequelize.sync()
+connection.sync()
 
 User.destroy({
     where: {}

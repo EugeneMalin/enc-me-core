@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from "../sequelize";
+import {connection} from "../sequelize";
 
 class RefreshToken extends Model {
     public userId!: number;
@@ -13,7 +13,7 @@ RefreshToken.init({
     clientId: DataTypes.STRING,
     token: DataTypes.STRING
 }, {
-    modelName: 'refreshtoken', sequelize
+    modelName: 'refreshtoken', sequelize: connection
 })
 
 export default RefreshToken

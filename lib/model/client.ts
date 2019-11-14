@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from "../sequelize";
+import {connection} from "../sequelize";
 
 class Client extends Model {
     public id!: string;
@@ -15,7 +15,7 @@ Client.init({
     name: DataTypes.STRING,
     clientSecret: DataTypes.STRING
 }, {
-    modelName: 'client', sequelize
+    modelName: 'client', sequelize: connection
 })
 
 export default Client;

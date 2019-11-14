@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize-typescript';  
 import config from './config';
 
-const sequelize =  new Sequelize({
+const connection =  new Sequelize({
     database: config.get('postgres:credits:dbname'),
     dialect: 'postgres',
     username: config.get('postgres:credits:username'),
@@ -10,4 +10,6 @@ const sequelize =  new Sequelize({
     logging: process.env.NODE_ENV !== 'production'
 })
 
-export default sequelize;
+export {
+    connection
+};
