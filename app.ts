@@ -2,6 +2,8 @@ import bodyParser from 'body-parser';
 import passport from 'passport';
 import methodOverride from 'method-override';
 import express from 'express';
+import socket, { Server } from 'socket.io';
+import http from 'http';
 
 import config from './lib/config';
 import logger from './lib/log';
@@ -13,8 +15,17 @@ import oauth from './lib/oauth';
 
 import './lib/relations';
 import './lib/auth';
+import User from './lib/model/user';
+import Message from './lib/model/message';
+
+interface IMobileSocket {
+    userId: number;
+    socketId: string;
+}
 
 const server: express.Application = express();
+const io: Server = socket(http.createServer().listen(config.get('socketPort')));
+const mobileSockets: IMobileSocket[] = [];
 
 connection.sync();
 
@@ -52,3 +63,55 @@ server.get('/api/userInfo',
 server.listen(config.get('port'), function() {
     logger.info('Express server listening on port ' + config.get('port'));
 });
+
+io.on('connection', socket => {
+    socket.on('newUser', (credentials: {
+        username: string,
+        password: string
+    }) => {
+        const userDraft = User.getDraft(credentials.username, credentials.password)
+        const emitUser = (user: User) => {
+            const index = mobileSockets.findIndex(({userId}) => userId === user.id)
+            if (index) {
+                mobileSockets[index].socketId = socket.id
+            } else {
+                mobileSockets.push({
+                    userId: user.id,
+                    socketId: socket.id
+                });
+            }
+            socket.emit('userCreated', { user });
+            socket.broadcast.emit('newUser', user);
+        }
+        User.findOne({
+            where: {
+                username: userDraft.username,
+                hashedPassword: userDraft.hashedPassword
+            }
+        }).then((user: User|null) => {
+            if (!user) {
+                User.create(userDraft).then(emitUser)
+            } else {
+                emitUser(user)
+            }
+        })
+    });
+    socket.on('chat', teamId => {
+        Message.findAll({
+            where: {
+                teamId
+            }
+        }).then(messages => socket.emit('priorMessages', messages))
+    });
+    socket.on('message', (text, teamId, userId) => {
+        Message.create({
+            text,
+            teamId,
+            userId
+        }).then((message) => {
+            socket.emit('incomingMessage', message);
+            //fixme доработать механизм чтобы сообщение шло только в один чат
+            socket.broadcast.emit('incomingMessage', message);
+        })
+    })
+})

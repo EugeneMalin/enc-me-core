@@ -1,5 +1,6 @@
 {
 	"port" : 1337,
+	"socketPort": 1338,
 	"security": {
         "tokenLife" : 3600
     },
