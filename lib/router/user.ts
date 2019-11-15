@@ -1,9 +1,11 @@
 import express, { Request, Response } from 'express';
 import UserModel from '../model/user';
 import passport from 'passport';
+import logger from '../log';
+import cors from '../cors'
 
 const router = express.Router();
-
+router.all('*', cors);
 const DEFAULT_USER_CHECK = (req: Request, res: Response) => {
     if (!req.user) {
         return res.send('There is no user');
@@ -18,7 +20,13 @@ router.get('/', passport.authenticate('bearer', {session: false}), DEFAULT_USER_
     UserModel.findAll({where: req.body.filter}).then(users => res.send(users));
 });
 router.post('/', (req, res) => {    
-    UserModel.create(req.body).then(user => res.send(user));
+    logger.info('Try create user: ' + JSON.stringify(req.body))
+    UserModel.create(UserModel.getDraft(req.body.username || null, req.body.password))
+        .then(user => res.send(user))
+        .catch(e => res.send({
+            error: true,
+            errorDetails: e.message
+        }))
 });
 router.get('/:id', DEFAULT_USER_CHECK, (req, res) => {    
     UserModel.findOne({where: {

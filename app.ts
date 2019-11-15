@@ -4,6 +4,7 @@ import methodOverride from 'method-override';
 import express from 'express';
 import socket, { Server } from 'socket.io';
 import http from 'http';
+import cors from './lib/cors'
 
 import config from './lib/config';
 import logger from './lib/log';
@@ -29,6 +30,7 @@ const mobileSockets: IMobileSocket[] = [];
 
 connection.sync();
 
+server.use(cors);
 server.use(methodOverride('X-HTTP-Method-Override'));
 server.use(passport.initialize());
 server.use(bodyParser.json());
@@ -65,6 +67,13 @@ server.listen(config.get('port'), function() {
 });
 
 io.on('connection', socket => {
+    socket.on('showHelp', ({foo}) => logger.info(`Need help for ${foo}`))
+
+    server.get('/api/catch-help', function(req, res) {
+        socket.broadcast.emit('needHelp', { foo: 'bar'})
+        res.send('Help requested')
+    })    
+
     socket.on('newUser', (credentials: {
         username: string,
         password: string
@@ -72,7 +81,7 @@ io.on('connection', socket => {
         const userDraft = User.getDraft(credentials.username, credentials.password)
         const emitUser = (user: User) => {
             const index = mobileSockets.findIndex(({userId}) => userId === user.id)
-            if (index) {
+            if (index > -1) {
                 mobileSockets[index].socketId = socket.id
             } else {
                 mobileSockets.push({
@@ -85,8 +94,7 @@ io.on('connection', socket => {
         }
         User.findOne({
             where: {
-                username: userDraft.username,
-                hashedPassword: userDraft.hashedPassword
+                username: userDraft.username
             }
         }).then((user: User|null) => {
             if (!user) {

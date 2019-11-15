@@ -6,7 +6,7 @@
   "scripts": {
     "tsc": "tsc",
     "autogen": "tsc && node ./build/demo.js",
-    "debug": "tsc && node ./build/app.js",
+    "debug": "tsc && export DEBUG=express:* && node --inspect ./build/app.js",
     "start": "tsc && export NODE_ENV=production && node ./build/app.js"
   },
   "author": "Eugene Malin (Novikov)",
@@ -27,6 +27,7 @@
     "@types/winston": "^2.4.4",
     "Faker": "^0.7.2",
     "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "method-override": "^3.0.0",
     "nconf": "^0.10.0",
@@ -42,5 +43,8 @@
     "socket.io": "^2.3.0",
     "typescript": "^3.7.2",
     "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.6"
   }
 }

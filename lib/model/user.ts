@@ -60,7 +60,8 @@ User.init({
     },
     username: {
         type: DataTypes.STRING,
-        unique: true
+        unique: true,
+        allowNull: false
     },
     hashedPassword: DataTypes.STRING,
     salt: DataTypes.STRING
