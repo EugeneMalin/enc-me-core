@@ -4,16 +4,16 @@ import ClientModel from '../model/client';
 const router = express.Router();
 
 router.post('/', (req, res) => {    
-    ClientModel.create(req.body).then(client => res.send(client));
+    ClientModel.findOrCreate({where: req.body}).then(client => res.send(client)).catch(e => {
+        res.send({
+            error: true,
+            errorDetails: e.message
+        })
+    });
 });
-router.get('/:id', (req, res) => {    
-    ClientModel.findOne({where: {
-        id: req.params.id
-    }}).then(client => res.send(client));
-});
-router.delete('/:id', (req, res) => {    
+router.delete('/', (req, res) => {    
     ClientModel.destroy({where: {
-        id: req.params.id
+        name: req.body.name
     }}).then(number => res.send({number}));
 });
 

@@ -26,7 +26,6 @@ passport.use(new BasicStrategy((username: string, password: string, done: Functi
 }));
 
 passport.use(new ClientPasswordStrategy((clientId: string, clientSecret: string, done: Function) => {
-    
     return Client.findOne({
         where: { id: clientId }
     }).then((client: Client|null) => {
