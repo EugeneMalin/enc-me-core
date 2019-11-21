@@ -6,6 +6,14 @@ class Conversation extends Model {
     public id!: string;
     public messages!: Message[]
 
+    getMessages(): Promise<{text: string, user: {_id: number, name: string}}[]> {
+      return Promise.all((this.messages || []).map(msg => msg.markUser())).then((msgs: Message[]) => {        
+        return msgs.map(m => {
+          return {text: m.text, user: m.user}
+        })
+      });
+    }
+
     static findOrCreateConversation(user1Id: number, user2Id: number): Promise<Conversation> {
         return Conversation.findOne({
           where: {

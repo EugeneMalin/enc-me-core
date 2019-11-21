@@ -43,15 +43,16 @@ io.on('connection', socket => {
     socket.on('chat', users => {
         Conversation.findOrCreateConversation(users.user.id, users.receiver.id)
             .then(conversation => {
-                Promise.all((conversation.messages || []).map(msg => msg.markUser())).then(msgs => socket.emit('priorMessages', msgs)); 
+                conversation.getMessages().then(msgs => socket.emit('priorMessages', msgs)); 
             });
     });
     socket.on('message', ({ text, sender, receiver }) => {
         Message.createMessage(text, sender.id, receiver.id)
+            .then(message => message.markUser())
             .then(message => {
-                socket.emit('incomingMessage', message);
+                socket.emit('incomingMessage', {text: message.text, user: message.user});
                 const receiverSocketId = mobileSockets[receiver.id];
-                socket.to('' + receiverSocketId).emit('incomingMessage', message);
-            });
+                socket.to('' + receiverSocketId).emit('incomingMessage', {text: message.text, user: message.user});
+            })
     });
 })
