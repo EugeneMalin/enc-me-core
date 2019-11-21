@@ -16,17 +16,10 @@ import oauth from './lib/oauth';
 
 import './lib/relations';
 import './lib/auth';
-import User from './lib/model/user';
-import Message from './lib/model/message';
-
-interface IMobileSocket {
-    userId: number;
-    socketId: string;
-}
+import { Conversation, User, Message } from './lib/relations';
 
 const server: express.Application = express();
 const io: Server = socket(http.createServer().listen(config.get('socketPort')));
-const mobileSockets: IMobileSocket[] = [];
 
 connection.sync();
 
@@ -66,6 +59,8 @@ server.listen(config.get('port'), function() {
     logger.info('Express server listening on port ' + config.get('port'));
 });
 
+const mobileSockets: {[key: string]: string|number} = {};
+
 io.on('connection', socket => {
     socket.on('showHelp', ({foo}) => logger.info(`Need help for ${foo}`))
 
@@ -79,47 +74,37 @@ io.on('connection', socket => {
         password: string
     }) => {
         const userDraft = User.getDraft(credentials.username, credentials.password)
-        const emitUser = (user: User) => {
-            const index = mobileSockets.findIndex(({userId}) => userId === user.id)
-            if (index > -1) {
-                mobileSockets[index].socketId = socket.id
-            } else {
-                mobileSockets.push({
-                    userId: user.id,
-                    socketId: socket.id
-                });
-            }
-            socket.emit('userCreated', { user });
-            socket.broadcast.emit('newUser', user);
+        const emitUser = (user: User, users: User[] | null) => {
+            mobileSockets[user.id] = socket.id
+            socket.emit('userCreated', { user, users });
+            socket.broadcast.emit('newUser', user, );
         }
-        User.findOne({
-            where: {
-                username: userDraft.username
-            }
-        }).then((user: User|null) => {
+        Promise.all([
+            User.findOne({
+                where: {
+                    username: userDraft.username
+                }
+            }), 
+            User.findAll()
+        ]).then(([user, users]) => {
             if (!user) {
-                User.create(userDraft).then(emitUser)
+                User.create(userDraft).then(newUser => emitUser(newUser, users))
             } else {
-                emitUser(user)
+                emitUser(user, users)
             }
         })
     });
-    socket.on('chat', teamId => {
-        Message.findAll({
-            where: {
-                teamId
-            }
-        }).then(messages => socket.emit('priorMessages', messages))
+    socket.on('chat', users => {
+        Conversation.findOrCreateConversation(users.user.id, users.receiver.id)
+            .then(conversation => conversation.getMessages())
+            .then(messages => socket.emit('priorMessages', messages));
     });
-    socket.on('message', (text, teamId, userId) => {
-        Message.create({
-            text,
-            teamId,
-            userId
-        }).then((message) => {
-            socket.emit('incomingMessage', message);
-            //fixme доработать механизм чтобы сообщение шло только в один чат
-            socket.broadcast.emit('incomingMessage', message);
-        })
-    })
+    socket.on('message', ({ text, sender, receiver }) => {
+        Message.createMessage(text, sender, receiver)
+            .then(message => {
+                socket.emit('incomingMessage', message);
+                const receiverSocketId = mobileSockets[receiver.id];
+                socket.to('' + receiverSocketId).emit('incomingMessage', message);
+            });
+    });
 })

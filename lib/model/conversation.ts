@@ -5,6 +5,10 @@ import {Message} from "../relations";
 class Conversation extends Model {
     public id!: string;
 
+    getMessages(): Promise<Message[]> {
+        return Message.findAll({where: {conversationId: this.id}})
+    }
+
     static findOrCreateConversation(user1Id: number, user2Id: number): Promise<Conversation> {
         return Conversation.findOne({
           where: {

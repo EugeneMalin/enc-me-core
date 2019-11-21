@@ -14,7 +14,7 @@ class Message extends Model {
         return this.update(this);
     }
 
-    async createMessage(text: string, senderId: number, receiverId: number): Promise<Message> {
+    static async createMessage(text: string, senderId: number, receiverId: number): Promise<Message> {
         const [message, conversation] = await Promise.all([
             Message.create({
                 text,
