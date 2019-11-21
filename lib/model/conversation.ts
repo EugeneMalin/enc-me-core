@@ -1,13 +1,10 @@
 import {connection} from "../sequelize";
 import { Model, DataTypes, Op } from 'sequelize';  
-import {Message} from "../relations";
+import {Message, User} from "../relations";
 
 class Conversation extends Model {
     public id!: string;
-
-    getMessages(): Promise<Message[]> {
-        return Message.findAll({where: {conversationId: this.id}})
-    }
+    public messages!: Message[]
 
     static findOrCreateConversation(user1Id: number, user2Id: number): Promise<Conversation> {
         return Conversation.findOne({
