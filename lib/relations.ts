@@ -11,6 +11,7 @@ import Client from "./model/client";
 import AccessToken from "./model/accesstoken";
 import RefreshToken from "./model/refreshtoken";
 import Message from "./model/message";
+import Conversation from "./model/conversation";
 
 // One task can have many answers
 Task.hasMany(Answer)
@@ -122,3 +123,17 @@ Client.belongsToMany(User, {
 
 User.hasMany(Message)
 Message.belongsTo(Team, {foreignKey: 'teamId'})
+
+User.hasMany(Conversation);
+Conversation.belongsTo(User, { as: 'user1' });
+Conversation.belongsTo(User, { as: 'user2' });
+Message.belongsTo(Conversation, {
+    foreignKey: 'conversationId'
+});
+Conversation.hasMany(Message);
+
+export {
+    Conversation,
+    User,
+    Message
+}
