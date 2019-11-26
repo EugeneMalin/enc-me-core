@@ -13,6 +13,8 @@ export interface IUser extends IUserDraft {
     password?: string
     firstName?: string
     lastName?: string
+    email?: string
+    token?: string
 }
 
 class User extends Model implements IUser {
@@ -21,6 +23,9 @@ class User extends Model implements IUser {
     public hashedPassword!: string;
     public salt!: string;
     public token!: string;
+    public email!: string;
+    public firstName!: string;
+    public lastName!: string;
 
     private _plainPassword: string = '';
 
@@ -41,7 +46,7 @@ class User extends Model implements IUser {
         return this._plainPassword;
     }
 
-    static getDraft(username: string, password: string): IUserDraft {
+    static getDraft(username: string, password: string): IUser {
         const u = new User();
         
         u.username = username;
@@ -50,7 +55,10 @@ class User extends Model implements IUser {
         return {
             username: u.username,
             hashedPassword: u.hashedPassword,
-            salt: u.salt
+            salt: u.salt,
+            firstName: '',
+            lastName: '',
+            email: ''
         };
     }
 }
@@ -68,6 +76,9 @@ User.init({
     },
     hashedPassword: DataTypes.STRING,
     token: DataTypes.STRING,
+    email: DataTypes.STRING,
+    firstName: DataTypes.STRING,
+    lastName: DataTypes.STRING,
     salt: DataTypes.STRING
 }, {
     modelName: 'user', sequelize: connection

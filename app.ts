@@ -17,24 +17,29 @@ const mobileSockets: {[key: string]: string|number} = {};
 io.on('connection', socket => {
     socket.on('createUser', (credentials: {
         username: string,
-        password: string
+        password: string,
+        email: string,
+        firstName: string,
+        lastName: string
     }) => {
         const userDraft = User.getDraft(credentials.username, credentials.password)
-        const emitUser = (user: User, users: User[] | null) => {
+        const emitUser = (user: User) => {
             mobileSockets[user.id] = socket.id
-            socket.emit('userCreated', { user, users });
+            socket.emit('userCreated', { user });
             socket.broadcast.emit('createUser', user);
         }
+        userDraft.email = credentials.email
+        userDraft.firstName = credentials.firstName
+        userDraft.lastName = credentials.lastName
         Promise.all([
             User.findOne({
                 where: {
                     username: userDraft.username
                 }
-            }),
-            User.findAll()
-        ]).then(([user, users]) => {
+            })
+        ]).then(([user]) => {
             if (!user) {
-                User.create(userDraft).then(newUser => emitUser(newUser, users))
+                User.create(userDraft).then(newUser => emitUser(newUser))
             } else {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.username} уже существует.`,
@@ -45,31 +50,35 @@ io.on('connection', socket => {
         })
     });
 
-    socket.on('getUser', (credentials: {
+    socket.on('enterUser', (credentials: {
         username: string,
         password: string
     }) => {
-        const userDraft = User.getDraft(credentials.username, credentials.password)
-
-        const emitUser = (user: User, users: User[] | null) => {
+        const emitUser = (user: User) => {
             mobileSockets[user.id] = socket.id
-            socket.emit('userUploaded', { user, users });
-            socket.broadcast.emit('getUser', user);
+            socket.emit('userUploaded', { user });
+            socket.broadcast.emit('enterUser', user);
         }
         Promise.all([
             User.findOne({
                 where: {
-                    username: userDraft.username,
-                    hashedPassword: userDraft.hashedPassword
+                    username: credentials.username
                 }
-            }),
-            User.findAll()
-        ]).then(([user, users]) => {
+            })
+        ]).then(([user]) => {
             if (user) {
-                emitUser(user, users)
+                if (user.check(credentials.password)) {
+                    emitUser(user);
+                } else {
+                    socket.emit('showMessage', {
+                        message: `Неправильный пароль для ${credentials.username}.`,
+                        type: 'danger',
+                        kind: 'auth'
+                    });
+                }
             } else {
                 socket.emit('showMessage', {
-                    message: `Неправильные параметры входа для ${credentials.username}.`,
+                    message: `Пользователь ${credentials.username} не существует.`,
                     type: 'danger',
                     kind: 'auth'
                 });
@@ -77,6 +86,41 @@ io.on('connection', socket => {
         })
     });
 
+    socket.on('uploadUser', (credentials: {
+        username: string,
+        hashedPassword: string
+    }) => {
+        const emitUser = (user: User) => {
+            mobileSockets[user.id] = socket.id
+            socket.emit('userUploaded', { user });
+            socket.broadcast.emit('enterUser', user);
+        }
+        Promise.all([
+            User.findOne({
+                where: {
+                    username: credentials.username
+                }
+            })
+        ]).then(([user]) => {
+            if (user) {
+                if (user.hashedPassword === credentials.hashedPassword) {
+                    emitUser(user);
+                } else {
+                    socket.emit('showMessage', {
+                        message: `Неправильный пароль для ${credentials.username}.`,
+                        type: 'danger',
+                        kind: 'auth'
+                    });
+                }
+            } else {
+                socket.emit('showMessage', {
+                    message: `Пользователь ${credentials.username} не существует.`,
+                    type: 'danger',
+                    kind: 'auth'
+                });
+            }
+        })
+    });
 
     /*socket.on('chat', users => {
         Conversation.findOrCreateConversation(users.user.id, users.receiver.id)
