@@ -5,12 +5,14 @@ import crypto from 'crypto';
 export interface IUserDraft {
     username: string
     hashedPassword: string
-    salt: string,
+    salt: string
 }
 
 export interface IUser extends IUserDraft {
     id?: number
     password?: string
+    firstName?: string
+    lastName?: string
 }
 
 class User extends Model implements IUser {
@@ -18,6 +20,7 @@ class User extends Model implements IUser {
     public username!: string;
     public hashedPassword!: string;
     public salt!: string;
+    public token!: string;
 
     private _plainPassword: string = '';
 
@@ -64,6 +67,7 @@ User.init({
         allowNull: false
     },
     hashedPassword: DataTypes.STRING,
+    token: DataTypes.STRING,
     salt: DataTypes.STRING
 }, {
     modelName: 'user', sequelize: connection

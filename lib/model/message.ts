@@ -1,12 +1,11 @@
 import { Model, DataTypes } from 'sequelize';  
 import {connection} from '../sequelize';
-import {Conversation, User} from '../relations';
+import {User} from '../relations';
 class Message extends Model {
     public id!: string;
     public text!: string;
     public userId!: number;
     public createdAt!: Date;
-    public conversationId!: string;
     public user!: {
         _id: number,
         name: string
@@ -25,13 +24,8 @@ class Message extends Model {
         return this;
     }
 
-    setConversation(connection: Conversation): Promise<Message> {
-        this.conversationId = connection.id;
-        return this.save();
-    }
-
     //TODO надо добавить метод в котором для пользователя будет {_id, name}
-
+/*
     static async createMessage(text: string, senderId: number, receiverId: number): Promise<Message> {
         const [message, conversation] = await Promise.all([
             Message.create({
@@ -42,6 +36,7 @@ class Message extends Model {
         ]);
         return await message.setConversation(conversation);
     };
+    */
 }
 
 Message.init({
