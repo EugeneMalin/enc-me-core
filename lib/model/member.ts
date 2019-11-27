@@ -3,7 +3,8 @@ import { Model, DataTypes } from 'sequelize';
 
 class Member extends Model {
     public isCaptain!: boolean;
-    
+    public id!: number;
+    public groupId!: string;
 }
 
 Member.init({
