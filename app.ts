@@ -6,7 +6,7 @@ import logger from './lib/log';
 
 import {connection} from './lib/sequelize'
 import './lib/relations';
-import { User } from './lib/relations';
+import { User, Group } from './lib/relations';
 
 connection.sync();
 
@@ -15,6 +15,7 @@ const io: Server = socket(http.createServer().listen(config.get('socketPort')));
 const mobileSockets: {[key: string]: string|number} = {};
 
 io.on('connection', socket => {
+    // создание пользователя по полным данным
     socket.on('createUser', (credentials: {
         username: string,
         password: string,
@@ -26,18 +27,15 @@ io.on('connection', socket => {
         const emitUser = (user: User) => {
             mobileSockets[user.id] = socket.id
             socket.emit('userCreated', { user });
-            socket.broadcast.emit('createUser', user);
         }
         userDraft.email = credentials.email
         userDraft.firstName = credentials.firstName
         userDraft.lastName = credentials.lastName
-        Promise.all([
-            User.findOne({
-                where: {
-                    username: userDraft.username
-                }
-            })
-        ]).then(([user]) => {
+        User.findOne({
+            where: {
+                username: userDraft.username
+            }
+        }).then((user) => {
             if (!user) {
                 User.create(userDraft).then(newUser => emitUser(newUser))
             } else {
@@ -50,6 +48,7 @@ io.on('connection', socket => {
         })
     });
 
+    // вход пользователя по паролю и логину
     socket.on('enterUser', (credentials: {
         username: string,
         password: string
@@ -57,15 +56,12 @@ io.on('connection', socket => {
         const emitUser = (user: User) => {
             mobileSockets[user.id] = socket.id
             socket.emit('userUploaded', { user });
-            socket.broadcast.emit('enterUser', user);
         }
-        Promise.all([
-            User.findOne({
-                where: {
-                    username: credentials.username
-                }
-            })
-        ]).then(([user]) => {
+        User.findOne({
+            where: {
+                username: credentials.username
+            }
+        }).then((user) => {
             if (user) {
                 if (user.check(credentials.password)) {
                     emitUser(user);
@@ -86,6 +82,7 @@ io.on('connection', socket => {
         })
     });
 
+    // догрузка данных пользователя по хешированнному ключу
     socket.on('uploadUser', (credentials: {
         username: string,
         hashedPassword: string
@@ -93,15 +90,12 @@ io.on('connection', socket => {
         const emitUser = (user: User) => {
             mobileSockets[user.id] = socket.id
             socket.emit('userUploaded', { user });
-            socket.broadcast.emit('enterUser', user);
         }
-        Promise.all([
-            User.findOne({
-                where: {
-                    username: credentials.username
-                }
-            })
-        ]).then(([user]) => {
+        User.findOne({
+            where: {
+                username: credentials.username
+            }
+        }).then((user) => {
             if (user) {
                 if (user.hashedPassword === credentials.hashedPassword) {
                     emitUser(user);
@@ -120,6 +114,10 @@ io.on('connection', socket => {
                 });
             }
         })
+    });
+
+    socket.on('createTeam', () => {
+
     });
 
     /*socket.on('chat', users => {
