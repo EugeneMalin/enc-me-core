@@ -180,6 +180,79 @@ io.on('connection', socket => {
         })
     });
 
+    socket.on('joinToTeam', (credentials: {user: IUser, group: Group}) => {
+        User.findByPk(credentials.user.id, {include: [Member]}).then(user => {
+            if (!user) {
+                socket.emit('showMessage', {
+                    message: `Пользователь ${credentials.user.username} не существует.`,
+                    type: 'danger',
+                    kind: 'auth'
+                });
+                return;
+            }
+            if (!user.member) {
+                return Promise.all([
+                    Member.create({isCaptain: false}),
+                    Group.findByPk(credentials.group.id)
+                ]).then(([member, group]) => {
+                    if (!member) {
+                        socket.emit('showMessage', {
+                            message: `Упс! Что-то пошло не так, но мы уже об этом знаем.`,
+                            type: 'danger',
+                            kind: 'auth'
+                        });
+                        return
+                    }
+                    if (!group) {
+                        socket.emit('showMessage', {
+                            message: `Команда ${credentials.group.name} уже не существует.`,
+                            type: 'danger',
+                            kind: 'auth'
+                        });
+                        //todo надо вызвать мульти удаление этой команды
+                        return
+                    }
+                    if (group.isClosed) {
+                        socket.emit('showMessage', {
+                            message: `Команда ${credentials.group.name} закрыта для добавления.`,
+                            type: 'danger',
+                            kind: 'auth'
+                        });
+                        //todo надо вызвать мульти удаление этой команды
+                        return
+                    }
+                    user.memberId = member.id
+                    member.groupId = group.id
+                    return Promise.all([group.save(), member.save(), user.save()])
+                }).then((storedValues) => {
+                    Promise.all([
+                        User.findByPk(credentials.user.id, {include: [Member]}),
+                    ]).then(([user]) => {
+                        if (user) {
+                            socket.emit('groupExtended', {user})
+                            socket.broadcast.emit('membersUpdated', {group: storedValues && storedValues[0] || null, user})
+                        }
+                    })
+                })
+            }
+            if (!user.member.isCaptain) {
+                socket.emit('showMessage', {
+                    message: `Пользователь ${credentials.user.username} управляет командой.`,
+                    type: 'danger',
+                    kind: 'auth'
+                });
+                return 
+            }
+            if (!user.member) {
+                socket.emit('showMessage', {
+                    message: `Пользователь ${credentials.user.username} состоит в команде.`,
+                    type: 'danger',
+                    kind: 'auth'
+                });
+                return 
+            }
+        })
+    });
     /*socket.on('chat', users => {
         Conversation.findOrCreateConversation(users.user.id, users.receiver.id)
             .then(conversation => {
