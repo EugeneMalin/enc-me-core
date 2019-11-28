@@ -9,6 +9,7 @@ import './lib/relations';
 import { User, Group, Member, Message } from './lib/relations';
 import { IUser } from './lib/model/user';
 import { Op } from 'sequelize';
+import { text } from 'body-parser';
 
 connection.sync();
 
@@ -22,12 +23,12 @@ interface IMobileSockets {
 const mobileSockets: {[key: string]: IMobileSockets} = {};
 
 io.on('connection', socket => {
-    const uploadUser = (user: User, group: Group|null, groups: Group[]|null) => {
+    const uploadUser = (user: User, member: Member|null, group: Group|null, groups: Group[]|null) => {
         mobileSockets[user.id] = {
             socket: socket.id,
-            member: user.member
+            member: member
         }
-        socket.emit('userUploaded', {user, group, groups});
+        socket.emit('userUploaded', {user, group, member, groups});
     }
 
     // создание пользователя по полным данным
@@ -48,8 +49,7 @@ io.on('connection', socket => {
         User.findOne({
             where: {
                 username: userDraft.username
-            },
-            include: [Member]
+            }
         }).then((user) => {
             if (!user) {
                 User.create(userDraft).then(newUser => emitUser(newUser))
@@ -78,18 +78,23 @@ io.on('connection', socket => {
                 where: {
                     username: credentials.username
                 },
-                include: [Member]
             }), 
             Group.findAll()
         ]).then(([user, groups]) => {
             if (user) {
                 if (user.check(credentials.password)) {
-                    if (user.member) {
-                        return Group.findByPk(user.member.groupId).then(group => {
-                            uploadUser(user, group, groups);
-                        })
-                    }
-                    uploadUser(user, null, groups);
+                    Member.findOne({
+                        where: {
+                            userId: user.id
+                        }
+                    }).then((member) => {
+                        if (member) {
+                            return Group.findByPk(member.groupId).then(group => {
+                                uploadUser(user, member, group, groups);
+                            })
+                        }
+                        uploadUser(user, null, null, groups);
+                    })
                 } else {
                     socket.emit('showMessage', {
                         message: `Неправильный пароль для ${credentials.username}.`,
@@ -116,19 +121,24 @@ io.on('connection', socket => {
             User.findOne({
                 where: {
                     username: credentials.username
-                },
-                include: [Member]
+                }
             }), 
             Group.findAll()
         ]).then(([user, groups]) => {
             if (user) {
                 if (user.hashedPassword === credentials.hashedPassword) {
-                    if (user.member) {
-                        return Group.findByPk(user.member.groupId).then(group => {
-                            uploadUser(user, group, groups);
-                        })
-                    }
-                    uploadUser(user, null, groups);
+                    Member.findOne({
+                        where: {
+                            userId: user.id
+                        }
+                    }).then((member) => {
+                        if (member) {
+                            return Group.findByPk(member.groupId).then(group => {
+                                uploadUser(user, member, group, groups);
+                            })
+                        }
+                        uploadUser(user, null, null, groups);
+                    })
                 } else {
                     socket.emit('showMessage', {
                         message: `Неправильный пароль для ${credentials.username}.`,
@@ -147,7 +157,18 @@ io.on('connection', socket => {
     });
 
     socket.on('createTeam', (credentials: {user: IUser, group: {name: string, idClosed: boolean}}) => {
-        User.findByPk(credentials.user.id, {include: [Member]}).then(user => {
+        if (!credentials.user.id) {
+            return;
+        }
+        
+        Promise.all([
+            User.findByPk(credentials.user.id),
+            Member.findOne({
+                where: {
+                    userId: credentials.user.id
+                }
+            })
+        ]).then(([user, member])=> {
             if (!user) {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.user.username} не существует.`,
@@ -156,27 +177,27 @@ io.on('connection', socket => {
                 });
                 return;
             }
-            if (!user.member) {
+            if (!member) {
                 return Promise.all([
                     Member.create({isCaptain: true}),
                     Group.create(credentials.group)
                 ]).then(([member, group]) =>{
-                    user.memberId = member.id
+                    member.userId = user.id
                     member.groupId = group.id
                     return Promise.all([group.save(), member.save(), user.save()])
-                }).then(storedValues => {
+                }).then(([group, member, user]) => {
                     Promise.all([
-                        User.findByPk(credentials.user.id, {include: [Member]}),
+                        User.findByPk(credentials.user.id),
                         Group.findAll()
                     ]).then(([user, groups]) => {
                         if (user && groups) {
-                            socket.emit('groupCreated', {group: groups.find(group => group.id === user.member.groupId), user, groups})
+                            socket.emit('groupCreated', {group: groups.find(group => group.id === member.groupId), user, groups})
                             socket.broadcast.emit('teamsUpdated', {groups})
                         }
                     })
                 })
             }
-            if (!user.member.isCaptain) {
+            if (!member.isCaptain) {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.user.username} управляет командой.`,
                     type: 'danger',
@@ -184,7 +205,7 @@ io.on('connection', socket => {
                 });
                 return 
             }
-            if (!user.member) {
+            if (!member) {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.user.username} состоит в команде.`,
                     type: 'danger',
@@ -196,7 +217,17 @@ io.on('connection', socket => {
     });
 
     socket.on('joinToTeam', (credentials: {user: IUser, group: Group}) => {
-        User.findByPk(credentials.user.id, {include: [Member]}).then(user => {
+        if (!credentials.user.id) {
+            return;
+        }
+        Promise.all([
+            User.findByPk(credentials.user.id),
+            Member.findOne({
+                where: {
+                    userId: credentials.user.id
+                }
+            })
+        ]).then(([user, member]) => {
             if (!user) {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.user.username} не существует.`,
@@ -205,7 +236,7 @@ io.on('connection', socket => {
                 });
                 return;
             }
-            if (!user.member) {
+            if (!member) {
                 return Promise.all([
                     Member.create({isCaptain: false}),
                     Group.findByPk(credentials.group.id)
@@ -236,12 +267,12 @@ io.on('connection', socket => {
                         //todo надо вызвать мульти удаление этой команды
                         return
                     }
-                    user.memberId = member.id
+                    member.userId = user.id
                     member.groupId = group.id
                     return Promise.all([group.save(), member.save(), user.save()])
                 }).then((storedValues) => {
                     Promise.all([
-                        User.findByPk(credentials.user.id, {include: [Member]}),
+                        User.findByPk(credentials.user.id),
                     ]).then(([user]) => {
                         if (user) {
                             socket.emit('groupExtended', {user, group: storedValues && storedValues[0]})
@@ -250,7 +281,7 @@ io.on('connection', socket => {
                     })
                 })
             }
-            if (!user.member.isCaptain) {
+            if (!member.isCaptain) {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.user.username} управляет командой.`,
                     type: 'danger',
@@ -258,7 +289,7 @@ io.on('connection', socket => {
                 });
                 return 
             }
-            if (!user.member) {
+            if (!member) {
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.user.username} состоит в команде.`,
                     type: 'danger',
@@ -268,21 +299,32 @@ io.on('connection', socket => {
             }
         })
     });
-    socket.on('chat', group => {
-        Group.findByPk(group.id, {include: [Member]}).then(group => {
-            if (group) {
-                User.findAll({
-                    where: {
-                        id: {[Op.contains]: group.members.map(member => member.id)}
-                    },
-                    include: [Message]
-                }).then(users => {
-                    const messages = users.map(user => {
-                        return user.messages.map(msg => msg.mark(user))
-                    }).flat()
-                    socket.emit('priorMessages', {messages})
+    socket.on('chat', ({group}) => {
+        Member.findAll({where: {
+            groupId: group.id
+        }}).then(members => {
+            User.findAll({
+                where: {
+                    id: {[Op.in]: members.map(member => member.userId)}
+                },
+                include: [Message]
+            }).then(users => {
+                const messages: Message[] = [];
+                users.forEach(user => {
+                    messages.push(...user.messages.map(msg => msg.mark(user)))
                 })
-            }
+                messages.sort((a, b) => {
+                    return b.createdAt.getTime() - a.createdAt.getTime()
+                })
+                socket.emit('priorMessages', {messages: messages.map(message => {
+                    return {
+                        _id: message.id,
+                        text: message.text,
+                        user: message.user,
+                        createdAt: message.createdAt
+                    }
+                })});
+            })
         });
     });
     socket.on('message', ({ text, sender, group }) => {
@@ -294,7 +336,12 @@ io.on('connection', socket => {
                     const member = mobileSockets[userId].member
                     if (member && member.groupId === group.id) {
                         const receiverSocketId = mobileSockets[userId].socket;
-                        socket.to('' + receiverSocketId).emit('incomingMessage', {text: message.text, user: message.user});
+                        socket.to('' + receiverSocketId).emit('incomingMessage', {
+                            text: message.text, 
+                            user: message.user,
+                            createAt: message.createdAt,
+                            _id: message.id
+                        });
                     }
                 })
                 if (mobileSockets[-123]) {

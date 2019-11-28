@@ -5,6 +5,7 @@ class Member extends Model {
     public isCaptain!: boolean;
     public id!: number;
     public groupId!: string;
+    public userId!: number;
 }
 
 Member.init({

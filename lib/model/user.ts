@@ -1,7 +1,7 @@
 import { Model, DataTypes } from "sequelize";
 import {connection} from "../sequelize";
 import crypto from 'crypto';
-import {Member, Message} from "../relations";
+import {Message} from "../relations";
 
 export interface IUserDraft {
     username: string
@@ -20,8 +20,6 @@ export interface IUser extends IUserDraft {
 
 class User extends Model implements IUser {
     public id!: number;
-    public memberId!: number;
-
     public username!: string;
     public hashedPassword!: string;
     public salt!: string;
@@ -29,7 +27,6 @@ class User extends Model implements IUser {
     public email!: string;
     public firstName!: string;
     public lastName!: string;
-    public member!: Member
     public messages!: Message[]
 
     private _plainPassword: string = '';

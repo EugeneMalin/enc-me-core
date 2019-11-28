@@ -8,7 +8,7 @@ Message.belongsTo(User, {
     foreignKey: 'userId'
 })
 
-User.belongsTo(Member);
+Member.belongsTo(User);
 
 Group.hasMany(Member);
 Member.belongsTo(Group);
