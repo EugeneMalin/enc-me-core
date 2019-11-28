@@ -11,12 +11,7 @@ class Message extends Model {
         name: string
     };
 
-    async markUser(): Promise<Message> {
-        const user = await User.findOne({
-            where: {
-                id: this.userId
-            }
-        });
+    mark(user: User|null): Message {
         this.user = {
             _id: user && user.id || -1,
             name: user && user.username || 'DELETED USER'
@@ -24,19 +19,22 @@ class Message extends Model {
         return this;
     }
 
-    //TODO надо добавить метод в котором для пользователя будет {_id, name}
-/*
-    static async createMessage(text: string, senderId: number, receiverId: number): Promise<Message> {
-        const [message, conversation] = await Promise.all([
-            Message.create({
-                text,
-                userId: senderId
-            }),
-            Conversation.findOrCreateConversation(senderId, receiverId)
-        ]);
-        return await message.setConversation(conversation);
+    async markUser(): Promise<Message> {
+        const user = await User.findOne({
+            where: {
+                id: this.userId
+            }
+        });
+        this.mark(user)
+        return this;
+    }
+
+    static async createMessage(text: string, senderId: number): Promise<Message> {
+        return Message.create({
+            text,
+            userId: senderId
+        })
     };
-    */
 }
 
 Message.init({

@@ -1,11 +1,13 @@
 import {connection} from "../sequelize";
 import { Model, DataTypes } from 'sequelize';  
+import {Member} from "../relations";
 
 class Group extends Model {
     public id!: string;
     public token!: string;
     public name!: string;
     public isClosed!: boolean;
+    public members!: Member[]
 }
 
 Group.init({

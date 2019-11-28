@@ -1,7 +1,7 @@
 import { Model, DataTypes } from "sequelize";
 import {connection} from "../sequelize";
 import crypto from 'crypto';
-import {Member, Group} from "../relations";
+import {Member, Message} from "../relations";
 
 export interface IUserDraft {
     username: string
@@ -30,7 +30,7 @@ class User extends Model implements IUser {
     public firstName!: string;
     public lastName!: string;
     public member!: Member
-    public group!: Group
+    public messages!: Message[]
 
     private _plainPassword: string = '';
 

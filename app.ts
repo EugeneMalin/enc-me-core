@@ -6,22 +6,28 @@ import logger from './lib/log';
 
 import {connection} from './lib/sequelize'
 import './lib/relations';
-import { User, Group, Member } from './lib/relations';
+import { User, Group, Member, Message } from './lib/relations';
 import { IUser } from './lib/model/user';
-import { userInfo } from 'os';
+import { Op } from 'sequelize';
 
 connection.sync();
 
 const io: Server = socket(http.createServer().listen(config.get('socketPort')));
 
-const mobileSockets: {[key: string]: string|number} = {};
+interface IMobileSockets {
+    socket: string,
+    member: Member | null
+}
 
-
+const mobileSockets: {[key: string]: IMobileSockets} = {};
 
 io.on('connection', socket => {
-    const uploadUser = (user: User, groups: Group[]|null) => {
-        mobileSockets[user.id] = socket.id
-        socket.emit('userUploaded', { user, groups});
+    const uploadUser = (user: User, group: Group|null, groups: Group[]|null) => {
+        mobileSockets[user.id] = {
+            socket: socket.id,
+            member: user.member
+        }
+        socket.emit('userUploaded', {user, group, groups});
     }
 
     // создание пользователя по полным данным
@@ -34,7 +40,6 @@ io.on('connection', socket => {
     }) => {
         const userDraft = User.getDraft(credentials.username, credentials.password)
         const emitUser = (user: User) => {
-            mobileSockets[user.id] = socket.id
             socket.emit('userCreated', { user });
         }
         userDraft.email = credentials.email
@@ -50,7 +55,7 @@ io.on('connection', socket => {
                 User.create(userDraft).then(newUser => emitUser(newUser))
                 socket.emit('showMessage', {
                     message: `Пользователь ${credentials.username} создан.`,
-                    type: 'sucess',
+                    type: 'success',
                     kind: 'creation'
                 });
             } else {
@@ -79,7 +84,12 @@ io.on('connection', socket => {
         ]).then(([user, groups]) => {
             if (user) {
                 if (user.check(credentials.password)) {
-                    uploadUser(user, groups);
+                    if (user.member) {
+                        return Group.findByPk(user.member.groupId).then(group => {
+                            uploadUser(user, group, groups);
+                        })
+                    }
+                    uploadUser(user, null, groups);
                 } else {
                     socket.emit('showMessage', {
                         message: `Неправильный пароль для ${credentials.username}.`,
@@ -113,7 +123,12 @@ io.on('connection', socket => {
         ]).then(([user, groups]) => {
             if (user) {
                 if (user.hashedPassword === credentials.hashedPassword) {
-                    uploadUser(user, groups);
+                    if (user.member) {
+                        return Group.findByPk(user.member.groupId).then(group => {
+                            uploadUser(user, group, groups);
+                        })
+                    }
+                    uploadUser(user, null, groups);
                 } else {
                     socket.emit('showMessage', {
                         message: `Неправильный пароль для ${credentials.username}.`,
@@ -229,7 +244,7 @@ io.on('connection', socket => {
                         User.findByPk(credentials.user.id, {include: [Member]}),
                     ]).then(([user]) => {
                         if (user) {
-                            socket.emit('groupExtended', {user})
+                            socket.emit('groupExtended', {user, group: storedValues && storedValues[0]})
                             socket.broadcast.emit('membersUpdated', {group: storedValues && storedValues[0] || null, user})
                         }
                     })
@@ -253,19 +268,57 @@ io.on('connection', socket => {
             }
         })
     });
-    /*socket.on('chat', users => {
-        Conversation.findOrCreateConversation(users.user.id, users.receiver.id)
-            .then(conversation => {
-                conversation.getMessages().then(msgs => socket.emit('priorMessages', msgs)); 
-            });
+    socket.on('chat', group => {
+        Group.findByPk(group.id, {include: [Member]}).then(group => {
+            if (group) {
+                User.findAll({
+                    where: {
+                        id: {[Op.contains]: group.members.map(member => member.id)}
+                    },
+                    include: [Message]
+                }).then(users => {
+                    const messages = users.map(user => {
+                        return user.messages.map(msg => msg.mark(user))
+                    }).flat()
+                    socket.emit('priorMessages', {messages})
+                })
+            }
+        });
     });
-    socket.on('message', ({ text, sender, receiver }) => {
-        Message.createMessage(text, sender.id, receiver.id)
+    socket.on('message', ({ text, sender, group }) => {
+        Message.createMessage(text, sender.id)
             .then(message => message.markUser())
             .then(message => {
                 socket.emit('incomingMessage', {text: message.text, user: message.user});
-                const receiverSocketId = mobileSockets[receiver.id];
-                socket.to('' + receiverSocketId).emit('incomingMessage', {text: message.text, user: message.user});
+                Object.keys(mobileSockets).forEach(userId => {
+                    const member = mobileSockets[userId].member
+                    if (member && member.groupId === group.id) {
+                        const receiverSocketId = mobileSockets[userId].socket;
+                        socket.to('' + receiverSocketId).emit('incomingMessage', {text: message.text, user: message.user});
+                    }
+                })
+                if (mobileSockets[-123]) {
+                    socket.to(mobileSockets[-123].socket).emit('runBot', {command: message.text, token: group.id, user: message.user});
+                }
             })
-    });*/
+    });
+    socket.on('initBot', () => {
+        socket.broadcast.emit('showMessage', {
+            message: 'Bot доступен',
+            type: 'info'
+        });
+        mobileSockets[-123] = {
+            socket: socket.id,
+            member: null
+        }
+    })
+    socket.on('answerBot', ({token, answer}) => {
+        Object.keys(mobileSockets).forEach(userId => {
+            const member = mobileSockets[userId].member
+            if (member && member.groupId === token) {
+                const receiverSocketId = mobileSockets[userId].socket;
+                socket.to('' + receiverSocketId).emit('incomingMessage', {text: answer, user: {_id: -123, name: "BOOT"}});
+            }
+        })
+    })
 })
