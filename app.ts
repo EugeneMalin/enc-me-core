@@ -9,7 +9,6 @@ import './lib/relations';
 import { User, Group, Member, Message } from './lib/relations';
 import { IUser } from './lib/model/user';
 import { Op } from 'sequelize';
-import { text } from 'body-parser';
 
 connection.sync();
 
@@ -191,8 +190,8 @@ io.on('connection', socket => {
                         Group.findAll()
                     ]).then(([user, groups]) => {
                         if (user && groups) {
-                            socket.emit('groupCreated', {group: groups.find(group => group.id === member.groupId), user, groups})
-                            socket.broadcast.emit('teamsUpdated', {groups})
+                            socket.emit('groupCreated', {group: groups.find(group => group.id === member.groupId), user, groups, member})
+                            socket.broadcast.emit('teamsUpdated', {groups, group, user, member})
                         }
                     })
                 })
@@ -275,8 +274,8 @@ io.on('connection', socket => {
                         User.findByPk(credentials.user.id),
                     ]).then(([user]) => {
                         if (user) {
-                            socket.emit('groupExtended', {user, group: storedValues && storedValues[0]})
-                            socket.broadcast.emit('membersUpdated', {group: storedValues && storedValues[0] || null, user})
+                            socket.emit('groupExtended', {user, group: storedValues && storedValues[0], member: storedValues && storedValues[1]})
+                            socket.broadcast.emit('membersUpdated', {group: storedValues && storedValues[0] || null, user, member: storedValues && storedValues[1]})
                         }
                     })
                 })
