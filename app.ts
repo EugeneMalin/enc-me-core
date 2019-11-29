@@ -330,7 +330,12 @@ io.on('connection', socket => {
         Message.createMessage(text, sender.id)
             .then(message => message.markUser())
             .then(message => {
-                socket.emit('incomingMessage', {text: message.text, user: message.user});
+                socket.emit('incomingMessage', {
+                    text: message.text, 
+                    user: message.user, 
+                    createAt: message.createdAt,
+                    _id: message.id
+                });
                 Object.keys(mobileSockets).forEach(userId => {
                     const member = mobileSockets[userId].member
                     if (member && member.groupId === group.id) {
@@ -343,8 +348,8 @@ io.on('connection', socket => {
                         });
                     }
                 })
-                if (mobileSockets[-123]) {
-                    socket.to(mobileSockets[-123].socket).emit('runBot', {command: message.text, token: group.id, user: message.user});
+                if (text && mobileSockets[-123] && text.indexOf('/') === 0) {
+                    socket.to(mobileSockets[-123].socket).emit('runBot', {command: message.text, token: group.id, user: sender});
                 }
             })
     });
@@ -363,7 +368,11 @@ io.on('connection', socket => {
             const member = mobileSockets[userId].member
             if (member && member.groupId === token) {
                 const receiverSocketId = mobileSockets[userId].socket;
-                socket.to('' + receiverSocketId).emit('incomingMessage', {text: answer, user: {_id: -123, name: "BOOT"}});
+                socket.to('' + receiverSocketId).emit('incomingMessage', {
+                    text: answer, 
+                    createAt: new Date(), 
+                    user: {_id: -123, name: "BOOT"}
+                });
             }
         })
     })
