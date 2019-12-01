@@ -23,6 +23,7 @@
     "@types/passport-http-bearer": "^1.0.34",
     "@types/passport-oauth2-client-password": "^0.1.2",
     "@types/socket.io": "^2.1.4",
+    "@types/uuid": "^3.4.6",
     "@types/validator": "^10.11.3",
     "@types/winston": "^2.4.4",
     "Faker": "^0.7.2",
@@ -42,6 +43,7 @@
     "sequelize-typescript": "^1.0.0",
     "socket.io": "^2.3.0",
     "typescript": "^3.7.2",
+    "uuid": "^3.3.3",
     "winston": "^3.2.1"
   },
   "devDependencies": {

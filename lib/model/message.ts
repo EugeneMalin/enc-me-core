@@ -38,7 +38,7 @@ class Message extends Model {
 }
 
 Message.init({
-    text: DataTypes.STRING,
+    text: DataTypes.TEXT,
     userId: DataTypes.INTEGER,
     id: {
         type: DataTypes.UUID,

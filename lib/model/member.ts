@@ -14,7 +14,8 @@ Member.init({
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    isCaptain: DataTypes.BOOLEAN
+    isCaptain: DataTypes.BOOLEAN,
+    isBot: DataTypes.BOOLEAN
 }, {
     modelName: 'member', sequelize: connection
 })
