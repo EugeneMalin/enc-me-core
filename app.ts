@@ -20,6 +20,7 @@ interface IMobileSockets {
 }
 
 const mobileSockets: {[key: string]: IMobileSockets} = {};
+
 connection.sync().then(() => {
     User.findOrCreate({
         where: {
