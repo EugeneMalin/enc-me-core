@@ -16,6 +16,7 @@ import addBotListeners from './lib/listeners/bot'
 const io: Server = socket(http.createServer().listen(config.get('socketPort')));
 
 const mobileSockets: {[key: string]: IMobileSockets} = {};
+const teamStates: {[key: string]: number} = {}
 
 connection.sync().then(() => {
     User.findOrCreate({
@@ -26,6 +27,8 @@ connection.sync().then(() => {
         }
     }).then(([BOT]) => {
         io.on('connection', socket => {
+            const tasks: any[] = config.get('game');
+
             addUserListeners(socket, mobileSockets)
         
             addTeamListeners(socket, BOT);
@@ -33,7 +36,16 @@ connection.sync().then(() => {
             addMessageListeners(socket, mobileSockets);
 
             addBotListeners(socket, BOT, mobileSockets);
-            
+
+            socket.on('updateGame', (team) => {
+                const tasks: any[] = config.get('game');
+                socket.emit('gameUpdated', {
+                    game: config.get('game'), 
+                    games: [config.get('game')],
+                    task: tasks[teamStates[team.id]] || null
+                })
+            })
+
             socket.on('enterGame', ({user, game}) => {
 
             })

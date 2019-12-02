@@ -1,6 +1,9 @@
 import { Socket } from "socket.io";
 import { User, Group, Member } from '../relations';
 import { IMobileSockets } from "../sequelize";
+import config from '../config';
+
+let level = 0
 
 export default function appendListners(socket: Socket, mobileSockets: {[key: string]: IMobileSockets}) {
     const uploadUser = (user: User, member: Member|null, group: Group|null, groups: Group[]|null) => {
@@ -8,7 +11,14 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
             socket: socket.id,
             member: member
         }
-        socket.emit('dataUploaded', {user, group, member, groups, game: null, games: []});
+        const tasks: any[] = config.get('game');
+
+        socket.emit('dataUploaded', {
+            user, 
+            group, 
+            member, 
+            groups
+        });
     }
 
     // создание пользователя по полным данным
