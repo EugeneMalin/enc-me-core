@@ -11,7 +11,7 @@ export default function appendListners(socket: Socket, BOT: User, mobileSockets:
         });
         mobileSockets[BOT.id] = {
             socket: socket.id,
-            member: null
+            teamToken: null
         }
     })
     socket.on('answerBot', ({token, answer}) => {
@@ -19,8 +19,7 @@ export default function appendListners(socket: Socket, BOT: User, mobileSockets:
             .then(message => message.markUser())
             .then(message => {
                 Object.keys(mobileSockets).forEach(userId => {
-                    const member = mobileSockets[userId].member
-                    if (member && member.groupId === token) {
+                    if (mobileSockets[userId].teamToken === token) {
                         const receiverSocketId = mobileSockets[userId].socket;
                         
                         socket.to('' + receiverSocketId).emit('incomingMessage', {

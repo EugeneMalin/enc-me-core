@@ -5,7 +5,7 @@ class Message extends Model {
     public id!: string;
     public text!: string;
     public userId!: number;
-    public groupId!: number;
+    public groupId!: string;
     public createdAt!: Date;
     public user!: {
         _id: number,
@@ -30,7 +30,7 @@ class Message extends Model {
         return this;
     }
 
-    static async createMessage(text: string, senderId: number, groupId: number|null = null): Promise<Message> {
+    static async createMessage(text: string, senderId: number, groupId: string|null = null): Promise<Message> {
         return Message.create({
             text,
             userId: senderId,
@@ -42,7 +42,7 @@ class Message extends Model {
 Message.init({
     text: DataTypes.TEXT,
     userId: DataTypes.INTEGER,
-    groupId: DataTypes.INTEGER,
+    groupId: DataTypes.STRING,
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,

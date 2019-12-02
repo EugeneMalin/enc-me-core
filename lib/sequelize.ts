@@ -14,7 +14,7 @@ const connection =  new Sequelize({
 
 export interface IMobileSockets {
     socket: string,
-    member: Member | null
+    teamToken: string | null
 }
 
 export {

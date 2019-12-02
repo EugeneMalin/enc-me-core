@@ -1,24 +1,19 @@
 import { Socket } from "socket.io";
 import { User, Group, Member } from '../relations';
 import { IMobileSockets } from "../sequelize";
-import config from '../config';
 import { post } from "../engine";
 
 let level = 0
 
 export default function appendListners(socket: Socket, mobileSockets: {[key: string]: IMobileSockets}) {
-    const uploadUser = (user: User, member: Member|null, group: Group|null, groups: Group[]|null) => {
+    const uploadUser = (user: User) => {
         mobileSockets[user.id] = {
             socket: socket.id,
-            member: member
+            teamToken: user.teamToken
         }
-        const tasks: any[] = config.get('game');
 
-        socket.emit('dataUploaded', {
-            user, 
-            group, 
-            member, 
-            groups
+        socket.emit('userUploaded', {
+            user
         });
     }
     // вход пользователя по паролю и логину
@@ -58,18 +53,7 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
 
                     user.save().then(() => {
                         if (user.check(credentials.password)) {
-                            Member.findOne({
-                                where: {
-                                    userId: user.id
-                                }
-                            }).then((member) => {
-                                if (member) {
-                                    return Group.findByPk(member.groupId).then(group => {
-                                        uploadUser(user, member, group, groups);
-                                    })
-                                }
-                                uploadUser(user, null, null, groups);
-                            })
+                            uploadUser(user);
                         } else {
                             socket.emit('showMessage', {
                                 message: `Неправильный пароль для ${credentials.username}.`,
@@ -115,18 +99,7 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
         ]).then(([user, groups]) => {
             if (user) {
                 if (user.hashedPassword === credentials.hashedPassword) {
-                    Member.findOne({
-                        where: {
-                            userId: user.id
-                        }
-                    }).then((member) => {
-                        if (member) {
-                            return Group.findByPk(member.groupId).then(group => {
-                                uploadUser(user, member, group, groups);
-                            })
-                        }
-                        uploadUser(user, null, null, groups);
-                    })
+                    uploadUser(user);
                 } else {
                     socket.emit('showMessage', {
                         message: `Неправильный пароль для ${credentials.username}.`,
