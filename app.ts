@@ -320,7 +320,7 @@ connection.sync().then(() => {
                     }).then(users => {
                         const messages: Message[] = [];
                         users.forEach(user => {
-                            messages.push(...user.messages.map(msg => msg.mark(user)))
+                            messages.push(...user.messages.filter(msg => msg.groupId === group.id).map(msg => msg.mark(user)))
                         })
                         messages.sort((a, b) => {
                             return b.createdAt.getTime() - a.createdAt.getTime()
@@ -337,7 +337,7 @@ connection.sync().then(() => {
                 });
             });
             socket.on('message', ({ text, sender, group }) => {
-                Message.createMessage(text, sender.id)
+                Message.createMessage(text, sender.id, group.id)
                     .then(message => message.markUser())
                     .then(message => {
                         socket.emit('incomingMessage', {
@@ -375,7 +375,7 @@ connection.sync().then(() => {
                 }
             })
             socket.on('answerBot', ({token, answer}) => {
-                Message.createMessage(answer, BOT.id)
+                Message.createMessage(answer, BOT.id, token)
                     .then(message => message.markUser())
                     .then(message => {
                         Object.keys(mobileSockets).forEach(userId => {
