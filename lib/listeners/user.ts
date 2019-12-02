@@ -8,7 +8,7 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
             socket: socket.id,
             member: member
         }
-        socket.emit('dataUploaded', {user, group, member, groups, game: null});
+        socket.emit('dataUploaded', {user, group, member, groups, game: null, games: []});
     }
 
     // создание пользователя по полным данным
