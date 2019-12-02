@@ -1,9 +1,7 @@
 import { Socket } from "socket.io";
-import { User, Group, Member } from '../relations';
+import { User } from '../relations';
 import { IMobileSockets } from "../sequelize";
 import { post } from "../engine";
-
-let level = 0
 
 export default function appendListners(socket: Socket, mobileSockets: {[key: string]: IMobileSockets}) {
     const uploadUser = (user: User) => {
@@ -33,14 +31,12 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
         }, '/api/account/signIn').then((res: string) => {
             const engineUser = JSON.parse(res);
             const userDraft = User.getDraft(credentials.username, credentials.password)
-            engineUser.isSuccess ? Promise.all([
+            engineUser.isSuccess ? 
                 User.findOrCreate({
                     where: {
                         username: credentials.username
                     },
-                }), 
-                Group.findAll()
-            ]).then(([[user], groups]) => {
+                }).then(([user]) => {
                 if (user) {
 
                     user.token = engineUser.token
@@ -89,14 +85,11 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
         if (!credentials.username && !credentials.hashedPassword) {
             return;
         }
-        Promise.all([
             User.findOne({
                 where: {
                     username: credentials.username
                 }
-            }), 
-            Group.findAll()
-        ]).then(([user, groups]) => {
+            }).then((user) => {
             if (user) {
                 if (user.hashedPassword === credentials.hashedPassword) {
                     uploadUser(user);

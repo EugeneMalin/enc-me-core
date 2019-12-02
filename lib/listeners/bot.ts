@@ -6,7 +6,7 @@ import { IMobileSockets } from "../sequelize";
 export default function appendListners(socket: Socket, BOT: User, mobileSockets: {[key: string]: IMobileSockets}) {
     socket.on('initBot', () => {
         socket.broadcast.emit('showMessage', {
-            message: 'Bot доступен',
+            message: 'Bot is online',
             type: 'info'
         });
         mobileSockets[BOT.id] = {

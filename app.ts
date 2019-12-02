@@ -9,7 +9,6 @@ import './lib/relations';
 import { User } from './lib/relations';
 
 import addUserListeners from './lib/listeners/user'
-import addTeamListeners from './lib/listeners/team'
 import addMessageListeners from './lib/listeners/message'
 import addBotListeners from './lib/listeners/bot'
 
@@ -30,8 +29,6 @@ connection.sync().then(() => {
 
             addUserListeners(socket, mobileSockets)
         
-            addTeamListeners(socket, BOT);
-
             addMessageListeners(socket, mobileSockets);
 
             addBotListeners(socket, BOT, mobileSockets);

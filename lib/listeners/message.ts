@@ -1,7 +1,6 @@
 import { Socket } from "socket.io";
-import { User, Message, Member } from '../relations';
+import { User, Message } from '../relations';
 import { IMobileSockets } from "../sequelize";
-import { Op } from 'sequelize';
 
 export default function appendListners(socket: Socket, mobileSockets: {[key: string]: IMobileSockets}) {
     socket.on('chat', ({user}) => {

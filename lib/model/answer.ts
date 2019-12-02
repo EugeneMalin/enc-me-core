@@ -15,9 +15,9 @@ Answer.init({
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    userId: DataTypes.INTEGER,
-    taskId: DataTypes.INTEGER,
-    groupId: DataTypes.UUID,
+    userId: DataTypes.STRING,
+    taskId: DataTypes.STRING,
+    groupId: DataTypes.STRING,
     isRight: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
