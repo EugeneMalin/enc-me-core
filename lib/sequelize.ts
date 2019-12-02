@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize-typescript';  
 import config from './config';
+import { Member } from './relations';
 
 const connection =  new Sequelize({
     database: config.get('postgres:credits:dbname'),
@@ -9,6 +10,12 @@ const connection =  new Sequelize({
     storage: ':memory:',
     logging: process.env.NODE_ENV !== 'production'
 })
+
+
+export interface IMobileSockets {
+    socket: string,
+    member: Member | null
+}
 
 export {
     connection

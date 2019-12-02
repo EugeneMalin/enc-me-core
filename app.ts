@@ -4,19 +4,16 @@ import http from 'http';
 import config from './lib/config';
 import logger from './lib/log';
 
-import {connection} from './lib/sequelize'
+import {connection, IMobileSockets} from './lib/sequelize'
 import './lib/relations';
 import { User, Group, Member, Message } from './lib/relations';
 import { IUser } from './lib/model/user';
 import { Op } from 'sequelize';
 
+import addUserListners from './lib/listeners/user'
+
 
 const io: Server = socket(http.createServer().listen(config.get('socketPort')));
-
-interface IMobileSockets {
-    socket: string,
-    member: Member | null
-}
 
 const mobileSockets: {[key: string]: IMobileSockets} = {};
 
@@ -29,138 +26,7 @@ connection.sync().then(() => {
         }
     }).then(([BOT]) => {
         io.on('connection', socket => {
-            const uploadUser = (user: User, member: Member|null, group: Group|null, groups: Group[]|null) => {
-                mobileSockets[user.id] = {
-                    socket: socket.id,
-                    member: member
-                }
-                socket.emit('dataUploaded', {user, group, member, groups, game: null});
-            }
-        
-            // создание пользователя по полным данным
-            socket.on('createUser', (credentials: {
-                username: string,
-                password: string,
-                email: string,
-                firstName: string,
-                lastName: string
-            }) => {
-                const userDraft = User.getDraft(credentials.username, credentials.password)
-                const emitUser = (user: User) => {
-                    socket.emit('userCreated', { user });
-                }
-                userDraft.email = credentials.email
-                userDraft.firstName = credentials.firstName
-                userDraft.lastName = credentials.lastName
-                User.findOne({
-                    where: {
-                        username: userDraft.username
-                    }
-                }).then((user) => {
-                    if (!user) {
-                        User.create(userDraft).then(newUser => emitUser(newUser))
-                        socket.emit('showMessage', {
-                            message: `Пользователь ${credentials.username} создан.`,
-                            type: 'success',
-                            kind: 'creation'
-                        });
-                    } else {
-                        socket.emit('showMessage', {
-                            message: `Пользователь ${credentials.username} уже существует.`,
-                            type: 'danger',
-                            kind: 'creation'
-                        });
-                    }
-                })
-            });
-        
-            // вход пользователя по паролю и логину
-            socket.on('enterUser', (credentials: {
-                username: string,
-                password: string
-            }) => {
-                Promise.all([
-                    User.findOne({
-                        where: {
-                            username: credentials.username
-                        },
-                    }), 
-                    Group.findAll()
-                ]).then(([user, groups]) => {
-                    if (user) {
-                        if (user.check(credentials.password)) {
-                            Member.findOne({
-                                where: {
-                                    userId: user.id
-                                }
-                            }).then((member) => {
-                                if (member) {
-                                    return Group.findByPk(member.groupId).then(group => {
-                                        uploadUser(user, member, group, groups);
-                                    })
-                                }
-                                uploadUser(user, null, null, groups);
-                            })
-                        } else {
-                            socket.emit('showMessage', {
-                                message: `Неправильный пароль для ${credentials.username}.`,
-                                type: 'danger',
-                                kind: 'auth'
-                            });
-                        }
-                    } else {
-                        socket.emit('showMessage', {
-                            message: `Пользователь ${credentials.username} не существует.`,
-                            type: 'danger',
-                            kind: 'auth'
-                        });
-                    }
-                })
-            });
-        
-            // догрузка данных пользователя по хешированнному ключу
-            socket.on('uploadUser', (credentials: {
-                username: string,
-                hashedPassword: string
-            }) => {
-                Promise.all([
-                    User.findOne({
-                        where: {
-                            username: credentials.username
-                        }
-                    }), 
-                    Group.findAll()
-                ]).then(([user, groups]) => {
-                    if (user) {
-                        if (user.hashedPassword === credentials.hashedPassword) {
-                            Member.findOne({
-                                where: {
-                                    userId: user.id
-                                }
-                            }).then((member) => {
-                                if (member) {
-                                    return Group.findByPk(member.groupId).then(group => {
-                                        uploadUser(user, member, group, groups);
-                                    })
-                                }
-                                uploadUser(user, null, null, groups);
-                            })
-                        } else {
-                            socket.emit('showMessage', {
-                                message: `Неправильный пароль для ${credentials.username}.`,
-                                type: 'danger',
-                                kind: 'auth'
-                            });
-                        }
-                    } else {
-                        socket.emit('showMessage', {
-                            message: `Пользователь ${credentials.username} не существует.`,
-                            type: 'danger',
-                            kind: 'auth'
-                        });
-                    }
-                })
-            });
+            addUserListners(socket, mobileSockets)
         
             socket.on('createTeam', (credentials: {user: IUser, group: {name: string, idClosed: boolean}}) => {
                 if (!credentials.user.id) {
@@ -393,6 +259,15 @@ connection.sync().then(() => {
                         })
                     })
                 
+            })
+            socket.on('enterGame', ({user, game}) => {
+
+            })
+            socket.on('createGame', ({user, game}) => {
+
+            })
+            socket.on('createGame', ({user, game}) => {
+
             })
         })    
     })
