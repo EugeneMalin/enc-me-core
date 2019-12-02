@@ -17,7 +17,6 @@ const io: Server = socket(http.createServer().listen(config.get('socketPort')));
 
 const mobileSockets: {[key: string]: IMobileSockets} = {};
 const teamStates: {[key: string]: number} = {}
-
 connection.sync().then(() => {
     User.findOrCreate({
         where: {

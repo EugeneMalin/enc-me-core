@@ -2,6 +2,7 @@ import { Socket } from "socket.io";
 import { User, Group, Member } from '../relations';
 import { IMobileSockets } from "../sequelize";
 import config from '../config';
+import { post } from "../engine";
 
 let level = 0
 
@@ -63,42 +64,63 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
         username: string,
         password: string
     }) => {
-        Promise.all([
-            User.findOne({
-                where: {
-                    username: credentials.username
-                },
-            }), 
-            Group.findAll()
-        ]).then(([user, groups]) => {
-            if (user) {
-                if (user.check(credentials.password)) {
-                    Member.findOne({
-                        where: {
-                            userId: user.id
-                        }
-                    }).then((member) => {
-                        if (member) {
-                            return Group.findByPk(member.groupId).then(group => {
-                                uploadUser(user, member, group, groups);
+        if (!credentials) {
+            return;
+        }
+        if (!credentials.username && !credentials.password) {
+            return;
+        }
+        post({
+            accountName: credentials.username,
+            password: credentials.password
+        }, '/api/account/signIn').then((res: string) => {
+            const engineUser = JSON.parse(res);
+            engineUser.isSuccess ? Promise.all([
+                User.findOne({
+                    where: {
+                        username: credentials.username
+                    },
+                }), 
+                Group.findAll()
+            ]).then(([user, groups]) => {
+                if (user) {
+                    user.token = engineUser.token
+                    user.teamToken = engineUser.teamToken
+                    user.save().then(() => {
+                        if (user.check(credentials.password)) {
+                            Member.findOne({
+                                where: {
+                                    userId: user.id
+                                }
+                            }).then((member) => {
+                                if (member) {
+                                    return Group.findByPk(member.groupId).then(group => {
+                                        uploadUser(user, member, group, groups);
+                                    })
+                                }
+                                uploadUser(user, null, null, groups);
                             })
+                        } else {
+                            socket.emit('showMessage', {
+                                message: `Неправильный пароль для ${credentials.username}.`,
+                                type: 'danger',
+                                kind: 'auth'
+                            });
                         }
-                        uploadUser(user, null, null, groups);
                     })
                 } else {
                     socket.emit('showMessage', {
-                        message: `Неправильный пароль для ${credentials.username}.`,
+                        message: `Пользователь ${credentials.username} не существует.`,
                         type: 'danger',
                         kind: 'auth'
                     });
                 }
-            } else {
-                socket.emit('showMessage', {
-                    message: `Пользователь ${credentials.username} не существует.`,
-                    type: 'danger',
-                    kind: 'auth'
-                });
-            }
+            }) : socket.emit('showMessage', {
+                message: `Неавторизованный в системе пользователь ${credentials.username}.`,
+                type: 'danger',
+                kind: 'auth'
+            });
+            
         })
     });
 

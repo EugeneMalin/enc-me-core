@@ -16,6 +16,7 @@ export interface IUser extends IUserDraft {
     lastName?: string
     email?: string
     token?: string
+    teamToken?: string
 }
 
 class User extends Model implements IUser {
@@ -24,6 +25,7 @@ class User extends Model implements IUser {
     public hashedPassword!: string;
     public salt!: string;
     public token!: string;
+    public teamToken!: string;
     public email!: string;
     public firstName!: string;
     public lastName!: string;
@@ -78,6 +80,7 @@ User.init({
     },
     hashedPassword: DataTypes.STRING,
     token: DataTypes.STRING,
+    teamToken: DataTypes.STRING,
     email: DataTypes.STRING,
     firstName: DataTypes.STRING,
     lastName: DataTypes.STRING,

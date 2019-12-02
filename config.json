@@ -15,6 +15,10 @@
 			"dbname": "encounter"
 		}
 	},
+	"engine": {
+		"host": "10.76.173.216",
+		"port": 5055
+	},
 	"game": {
 		"id": 0,
 		"description": "Игра 1",
