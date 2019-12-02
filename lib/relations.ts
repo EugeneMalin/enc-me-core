@@ -15,10 +15,6 @@ User.hasMany(Message);
 Message.belongsTo(User, {
     foreignKey: 'userId'
 })
-Group.hasMany(Message);
-Message.belongsTo(Group, {
-    foreignKey: 'groupId'
-})
 
 Member.belongsTo(User, {
     foreignKey: 'userId'

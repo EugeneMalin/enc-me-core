@@ -17,6 +17,7 @@ export interface IUser extends IUserDraft {
     email?: string
     token?: string
     teamToken?: string
+    gameId?: number
 }
 
 class User extends Model implements IUser {
@@ -30,6 +31,7 @@ class User extends Model implements IUser {
     public firstName!: string;
     public lastName!: string;
     public messages!: Message[]
+    public gameId!: number
 
     private _plainPassword: string = '';
 
@@ -78,6 +80,7 @@ User.init({
         unique: true,
         allowNull: false
     },
+    gameId: DataTypes.INTEGER,
     hashedPassword: DataTypes.STRING,
     token: DataTypes.STRING,
     teamToken: DataTypes.STRING,

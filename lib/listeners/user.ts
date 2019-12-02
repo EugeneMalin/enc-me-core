@@ -21,44 +21,6 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
             groups
         });
     }
-
-    // создание пользователя по полным данным
-    socket.on('createUser', (credentials: {
-        username: string,
-        password: string,
-        email: string,
-        firstName: string,
-        lastName: string
-    }) => {
-        const userDraft = User.getDraft(credentials.username, credentials.password)
-        const emitUser = (user: User) => {
-            socket.emit('userCreated', { user });
-        }
-        userDraft.email = credentials.email
-        userDraft.firstName = credentials.firstName
-        userDraft.lastName = credentials.lastName
-        User.findOne({
-            where: {
-                username: userDraft.username
-            }
-        }).then((user) => {
-            if (!user) {
-                User.create(userDraft).then(newUser => emitUser(newUser))
-                socket.emit('showMessage', {
-                    message: `Пользователь ${credentials.username} создан.`,
-                    type: 'success',
-                    kind: 'creation'
-                });
-            } else {
-                socket.emit('showMessage', {
-                    message: `Пользователь ${credentials.username} уже существует.`,
-                    type: 'danger',
-                    kind: 'creation'
-                });
-            }
-        })
-    });
-
     // вход пользователя по паролю и логину
     socket.on('enterUser', (credentials: {
         username: string,
@@ -75,17 +37,25 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
             password: credentials.password
         }, '/api/account/signIn').then((res: string) => {
             const engineUser = JSON.parse(res);
+            const userDraft = User.getDraft(credentials.username, credentials.password)
             engineUser.isSuccess ? Promise.all([
-                User.findOne({
+                User.findOrCreate({
                     where: {
                         username: credentials.username
                     },
                 }), 
                 Group.findAll()
-            ]).then(([user, groups]) => {
+            ]).then(([[user], groups]) => {
                 if (user) {
+
                     user.token = engineUser.token
                     user.teamToken = engineUser.teamToken
+                    user.hashedPassword = userDraft.hashedPassword
+                    user.salt = userDraft.salt
+                    user.firstName = engineUser.accountFirstName
+                    user.lastName = engineUser.accountLastName
+                    user.gameId = engineUser.games[0]
+
                     user.save().then(() => {
                         if (user.check(credentials.password)) {
                             Member.findOne({
@@ -129,6 +99,12 @@ export default function appendListners(socket: Socket, mobileSockets: {[key: str
         username: string,
         hashedPassword: string
     }) => {
+        if (!credentials) {
+            return;
+        }
+        if (!credentials.username && !credentials.hashedPassword) {
+            return;
+        }
         Promise.all([
             User.findOne({
                 where: {

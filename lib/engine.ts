@@ -1,5 +1,5 @@
 import config from './config';
-import { stringify, ParsedUrlQuery } from 'querystring';
+import { ParsedUrlQuery } from 'querystring';
 import { request } from 'http';
 
 export function post(data: ParsedUrlQuery, path: string) {
@@ -18,6 +18,9 @@ export function post(data: ParsedUrlQuery, path: string) {
                 resolve(body);
             });
         })
+        req.on('error', function(e) {
+            console.log('problem with request: ' + e.message);
+        });
         req.write(JSON.stringify(data))
         req.end()
     })
