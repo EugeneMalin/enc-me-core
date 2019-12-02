@@ -15,6 +15,7 @@ Member.init({
         primaryKey: true
     },
     groupId: DataTypes.UUID,
+    userId: DataTypes.INTEGER,
     isCaptain: {
         type: DataTypes.BOOLEAN,
         defaultValue: false

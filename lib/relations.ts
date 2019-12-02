@@ -21,7 +21,7 @@ Message.belongsTo(Group, {
 })
 
 Member.belongsTo(User, {
-    foreignKey: 'memberId'
+    foreignKey: 'userId'
 });
 
 Group.hasMany(Member);

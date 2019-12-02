@@ -9,7 +9,6 @@ import './lib/relations';
 import { User, Group, Member, Message } from './lib/relations';
 import { IUser } from './lib/model/user';
 import { Op } from 'sequelize';
-import uuid from 'uuid';
 
 
 const io: Server = socket(http.createServer().listen(config.get('socketPort')));
@@ -35,7 +34,7 @@ connection.sync().then(() => {
                     socket: socket.id,
                     member: member
                 }
-                socket.emit('userUploaded', {user, group, member, groups});
+                socket.emit('dataUploaded', {user, group, member, groups, game: null});
             }
         
             // создание пользователя по полным данным
